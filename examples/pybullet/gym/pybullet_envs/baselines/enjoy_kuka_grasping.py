@@ -7,7 +7,7 @@ os.sys.path.insert(0, parentdir)
 import gym
 from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
 
-from baselines import deepq
+from stable_baselines import deepq
 
 
 def main():

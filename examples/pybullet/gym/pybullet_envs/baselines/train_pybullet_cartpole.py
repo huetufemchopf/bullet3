@@ -7,7 +7,7 @@ os.sys.path.insert(0, parentdir)
 import gym
 from pybullet_envs.bullet.cartpole_bullet import CartPoleBulletEnv
 
-from baselines import deepq
+from stable_baselines import deepq
 
 
 def callback(lcl, glb):

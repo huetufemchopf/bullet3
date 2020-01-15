@@ -4,7 +4,7 @@ import os
 from gym import spaces
 import time
 import pybullet as p
-from . import kuka
+import kuka
 import numpy as np
 import pybullet_data
 import pdb
@@ -26,7 +26,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
                actionRepeat=80,
                isEnableSelfCollision=True,
                renders=False,
-               isDiscrete=False,
+               isDiscrete=True,
                maxSteps=8,
                dv=0.06,
                removeHeightHack=False,
@@ -83,6 +83,10 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     self._height = height
     self._numObjects = numObjects
     self._isTest = isTest
+    self.observation_space = spaces.Box(low=0,
+                                         high=255,
+                                         shape=(self._height, self._width, 3),
+                                         dtype=np.uint8)
 
     if self._renders:
       self.cid = p.connect(p.SHARED_MEMORY)
@@ -195,6 +199,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     dv = self._dv  # velocity per physics step.
     if self._isDiscrete:
       # Static type assertion for integers.
+      action = int(action)
       assert isinstance(action, int)
       if self._removeHeightHack:
         dx = [0, -dv, dv, 0, 0, 0, 0, 0, 0][action]
@@ -319,3 +324,15 @@ class KukaDiverseObjectEnv(KukaGymEnv):
   if parse_version(gym.__version__) < parse_version('0.9.6'):
     _reset = reset
     _step = step
+
+
+
+# if __name__ == '__main__':
+
+#datapath = pybullet_data.getDataPath()
+  # p.connect(p.GUI, options="--opencl2")
+  # #p.setAdditionalSearchPath(datapath)
+  # test =KukaDiverseObjectEnv()
+  # test.
+  # test.step([0, 0, 0, 0, 0, -0.25, 0.25])
+  # time.sleep(50)

@@ -12,7 +12,7 @@ import numpy as np
 import pybullet
 from . import racecar
 import random
-import pybullet_utils.bullet_client as bc
+from . import bullet_client
 import pybullet_data
 from pkg_resources import parse_version
 
@@ -40,9 +40,9 @@ class RacecarGymEnv(gym.Env):
     self._renders = renders
     self._isDiscrete = isDiscrete
     if self._renders:
-      self._p = bc.BulletClient(connection_mode=pybullet.GUI)
+      self._p = bullet_client.BulletClient(connection_mode=pybullet.GUI)
     else:
-      self._p = bc.BulletClient()
+      self._p = bullet_client.BulletClient()
 
     self.seed()
     #self.reset()

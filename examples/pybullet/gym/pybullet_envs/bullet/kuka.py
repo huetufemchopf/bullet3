@@ -53,6 +53,7 @@ class Kuka:
         -0.299912, 0.000000, -0.000043, 0.299960, 0.000000, -0.000200
     ]
     self.numJoints = p.getNumJoints(self.kukaUid)
+    print('joints', self.numJoints)
     for jointIndex in range(self.numJoints):
       p.resetJointState(self.kukaUid, jointIndex, self.jointPositions[jointIndex])
       p.setJointMotorControl2(self.kukaUid,
@@ -60,6 +61,7 @@ class Kuka:
                               p.POSITION_CONTROL,
                               targetPosition=self.jointPositions[jointIndex],
                               force=self.maxForce)
+      # print(p.getJointInfo(self.kukaUid, jointIndex))
 
     self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.640000,
                               0.075000, -0.190000, 0.000000, 0.000000, 1.000000, 0.000000)
@@ -77,6 +79,7 @@ class Kuka:
         #print(jointInfo[1])
         self.motorNames.append(str(jointInfo[1]))
         self.motorIndices.append(i)
+
 
   def getActionDimension(self):
     if (self.useInverseKinematics):
