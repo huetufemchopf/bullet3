@@ -1,10 +1,10 @@
-from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
+from pybullet_envs.bullet.tm700GymEnv import tm700GymEnv
 import random
 import os
 from gym import spaces
 import time
 import pybullet as p
-import kuka
+import tm700
 import numpy as np
 import pybullet_data
 import pdb
@@ -14,8 +14,8 @@ from pkg_resources import parse_version
 import gym
 
 
-class KukaDiverseObjectEnv(KukaGymEnv):
-  """Class for Kuka environment with diverse objects.
+class tm700DiverseObjectEnv(tm700GymEnv):
+  """Class for tm700 environment with diverse objects.
 
   In each episode some objects are chosen from a set of 1000 diverse objects.
   These 1000 objects are split 90/10 into a train and test set.
@@ -29,14 +29,14 @@ class KukaDiverseObjectEnv(KukaGymEnv):
                isDiscrete=True,
                maxSteps=8,
                dv=0.06,
-               removeHeightHack=False,
+               removeHeightHack=True,
                blockRandom=0.3,
                cameraRandom=0,
                width=48,
                height=48,
                numObjects=5,
                isTest=False):
-    """Initializes the KukaDiverseObjectEnv.
+    """Initializes the tm700DiverseObjectEnv.
 
     Args:
       urdfRoot: The diretory from which to load environment URDF's.
@@ -62,7 +62,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     """
 
     self._isDiscrete = isDiscrete
-    self._timeStep = 1. / 240.
+    self._timeStep = 1. / 10.
     self._urdfRoot = urdfRoot
     self._actionRepeat = actionRepeat
     self._isEnableSelfCollision = isEnableSelfCollision
@@ -113,7 +113,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     """
     # Set the camera settings.
     look = [0.23, 0.2, 0.54]
-    distance = 1.
+    distance = 6.
     pitch = -56 + self._cameraRandom * np.random.uniform(-3, 3)
     yaw = 245 + self._cameraRandom * np.random.uniform(-3, 3)
     roll = 0
@@ -137,7 +137,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
                0.000000, 0.000000, 0.0, 1.0)
 
     p.setGravity(0, 0, -10)
-    self._kuka = kuka.Kuka(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+    self._tm700 = tm700.tm700(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
 
@@ -165,7 +165,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
       angle = np.pi / 2 + self._blockRandom * np.pi * random.random()
       orn = p.getQuaternionFromEuler([0, 0, angle])
       urdf_path = os.path.join(self._urdfRoot, urdf_name)
-      uid = p.loadURDF(urdf_path, [xpos, ypos, .15], [orn[0], orn[1], orn[2], orn[3]])
+      uid = p.loadURDF(urdf_path, [xpos, ypos, .1], [orn[0], orn[1], orn[2], orn[3]])
       objectUids.append(uid)
       # Let each object fall to the tray individual, to prevent object
       # intersection.
@@ -237,7 +237,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
     """
     # Perform commanded action.
     self._env_step += 1
-    self._kuka.applyAction(action)
+    self._tm700.applyAction(action)
     for _ in range(self._actionRepeat):
       p.stepSimulation()
       if self._renders:
@@ -246,13 +246,13 @@ class KukaDiverseObjectEnv(KukaGymEnv):
         break
 
     # If we are close to the bin, attempt grasp.
-    state = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)
+    state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
     end_effector_pos = state[0]
     if end_effector_pos[2] <= 0.1:
-      finger_angle = 0.3
+      finger_angle = 1
       for _ in range(500):
         grasp_action = [0, 0, 0, 0, finger_angle]
-        self._kuka.applyAction(grasp_action)
+        self._tm700.applyAction(grasp_action)
         p.stepSimulation()
         #if self._renders:
         #  time.sleep(self._timeStep)
@@ -261,7 +261,7 @@ class KukaDiverseObjectEnv(KukaGymEnv):
           finger_angle = 0
       for _ in range(500):
         grasp_action = [0, 0, 0.001, 0, finger_angle]
-        self._kuka.applyAction(grasp_action)
+        self._tm700.applyAction(grasp_action)
         p.stepSimulation()
         if self._renders:
           time.sleep(self._timeStep)
@@ -327,12 +327,12 @@ class KukaDiverseObjectEnv(KukaGymEnv):
 
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
-#datapath = pybullet_data.getDataPath()
-  # p.connect(p.GUI, options="--opencl2")
-  # #p.setAdditionalSearchPath(datapath)
-  # test =KukaDiverseObjectEnv()
-  # test.
-  # test.step([0, 0, 0, 0, 0, -0.25, 0.25])
-  # time.sleep(50)
+# datapath = pybullet_data.getDataPath()
+  p.connect(p.GUI, options="--opencl2")
+  #p.setAdditionalSearchPath(datapath)
+  test = tm700DiverseObjectEnv()
+  test.reset()
+  test.step(1)
+  time.sleep(50)

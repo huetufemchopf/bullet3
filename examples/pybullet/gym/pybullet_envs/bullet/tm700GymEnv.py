@@ -26,12 +26,13 @@ class tm700GymEnv(gym.Env):
   metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
   def __init__(self,
-               urdfRoot=pybullet_data.getDataPath(),
+               urdfRoot=pybullet_data.getDataPath(), # necessary or not
                actionRepeat=1,
                isEnableSelfCollision=True,
                renders=False,
                isDiscrete=False,
                maxSteps=1000):
+
     self._isDiscrete = isDiscrete
     self._timeStep = 1. / 240.
     self._urdfRoot = urdfRoot
@@ -51,7 +52,7 @@ class tm700GymEnv(gym.Env):
       cid = p.connect(p.SHARED_MEMORY)
       if (cid < 0):
         cid = p.connect(p.GUI)
-      p.resetDebugVisualizerCamera(1.3, 180, -41, [0.52, -0.2, -0.33])
+      p.resetDebugVisualizerCamera(1.3, 180, -30, [0.52, -0.2, -0.33]) #????????????
     else:
       p.connect(p.DIRECT)
     #timinglog = p.startStateLogging(p.STATE_LOGGING_PROFILE_TIMINGS, "tm700Timings.json")
@@ -83,13 +84,15 @@ class tm700GymEnv(gym.Env):
     p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.820000,
                0.000000, 0.000000, 0.0, 1.0)
 
-    xpos = 0.55 + 0.12 * random.random()
-    ypos = 0 + 0.2 * random.random()
+    xpos = 0.55 + 0.12 # * random.random()
+    ypos = 0 + 0.2# * random.random()
     ang = 3.14 * 0.5 + 3.1415925438 * random.random()
     orn = p.getQuaternionFromEuler([0, 0, ang])
-    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, -0.15,
+    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, 0.01,
                                orn[0], orn[1], orn[2], orn[3])
-
+    blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
+    print('BLOCK INFO:',blockPos, blockOrn)
+    print('block:', self.blockUid)
     p.setGravity(0, 0, -10)
     self._tm700 = tm700.tm700(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
@@ -105,8 +108,14 @@ class tm700GymEnv(gym.Env):
     return [seed]
 
   def getExtendedObservation(self):
-    self._observation = self._tm700.getObservation()
-    gripperState = p.getLinkState(self._tm700.tm700Uid, self._tm700.tm700GripperIndex)
+
+    '''
+
+    Returns:we return the relative x,y position and euler angle of block in gripper space
+
+    '''
+    self._observation = self._tm700.getObservation() # position and euler angles
+    gripperState = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmGripperIndex)
     gripperPos = gripperState[0]
     gripperOrn = gripperState[1]
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
@@ -216,7 +225,7 @@ class tm700GymEnv(gym.Env):
 
   def _termination(self):
     #print (self._tm700.endEffectorPos[2])
-    state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tm700EndEffectorIndex)
+    state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
     actualEndEffectorPos = state[0]
 
     #print("self._envStepCounter")
@@ -234,7 +243,7 @@ class tm700GymEnv(gym.Env):
       #start grasp and terminate
       fingerAngle = 0.3
       for i in range(100):
-        graspAction = [0, 0, 0.0001, 0, fingerAngle]
+        graspAction = [0, 0, 0.000, 0, fingerAngle]
         self._tm700.applyAction(graspAction)
         p.stepSimulation()
         fingerAngle = fingerAngle - (0.3 / 100.)
@@ -242,7 +251,7 @@ class tm700GymEnv(gym.Env):
           fingerAngle = 0
 
       for i in range(1000):
-        graspAction = [0, 0, 0.001, 0, fingerAngle]
+        graspAction = [0, 0, 0.0, 0, fingerAngle]
         self._tm700.applyAction(graspAction)
         p.stepSimulation()
         blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
@@ -250,7 +259,7 @@ class tm700GymEnv(gym.Env):
           #print("BLOCKPOS!")
           #print(blockPos[2])
           break
-        state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tm700EndEffectorIndex)
+        state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
         actualEndEffectorPos = state[0]
         if (actualEndEffectorPos[2] > 0.5):
           break
@@ -264,7 +273,7 @@ class tm700GymEnv(gym.Env):
     #rewards is height of target object
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
     closestPoints = p.getClosestPoints(self.blockUid, self._tm700.tm700Uid, 1000, -1,
-                                       self._tm700.tm700EndEffectorIndex)
+                                       self._tm700.tmEndEffectorIndex)
 
     reward = -1000
 
@@ -291,3 +300,14 @@ class tm700GymEnv(gym.Env):
     _reset = reset
     _seed = seed
     _step = step
+
+
+if __name__ == '__main__':
+
+# datapath = pybullet_data.getDataPath()
+  p.connect(p.GUI, options="--opencl2")
+  #p.setAdditionalSearchPath(datapath)
+  test =tm700GymEnv()
+  # test.reset()
+  test.step2([0.67, 0.2, 0.01,  -0.0, 0.0])
+  time.sleep(50)

@@ -6,7 +6,7 @@ os.sys.path.insert(0, parentdir)
 
 import gym
 from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
-from pybullet_envs.bullet.kuka_diverse_object_gym_env import KukaDiverseObjectEnv
+from pybullet_envs.bullet.tm700_diverse_object_gym_env import tm700DiverseObjectEnv
 from pybullet_envs.bullet.tm700GymEnv import tm700GymEnv
 from pybullet_envs.bullet.kukaCamGymEnv import KukaCamGymEnv
 from stable_baselines import deepq
@@ -27,7 +27,7 @@ def callback(lcl, glb):
 
 def main():
 
-  env1 = tm700GymEnv(renders=True, isDiscrete=False)
+  env1 = tm700DiverseObjectEnv(renders=True, isDiscrete=False)
   model = DDPG(MlpPolicy, env1, verbose=1)
 
   # = deepq.models.mlp([64])
@@ -38,8 +38,8 @@ def main():
                     # print_freq=10,
                     # callback=callback, network='mlp')
   print("Saving model to kukadiverse_model.pkl")
-  model.save("kukadiversecont_model.pkl")
+  model.save("tmdiversecont_model.pkl")
 
 
-  main()
+main()
 

@@ -28,7 +28,8 @@ class tm700:
     # upper limits for null space
     self.ul = [.967, 2, 2.96, 2.29, 2.96, 2.09, 3.05]
     # joint ranges for null space
-    self.jr = [5.8, 4, 5.8, 4, 5.8, 4, 6]
+    # self.jr = [5.8, 4, 5.8, 4, 5.8, 4, 6]
+    self.jr = [10, 10, 10, 10, 10, 10, 10]
     # restposes for null space
     self.rp = [0, 0, 0, 0.5 * math.pi, 0, -math.pi * 0.5 * 0.66, 0]
     # joint damping coefficents
@@ -40,13 +41,13 @@ class tm700:
 
   def reset(self):
 
-    robot = p.loadURDF("/Users/celine/Desktop/sp/Gazebo_arm/urdf/tm700_robot.urdf")
+    robot = p.loadURDF("../Gazebo_arm/urdf/tm700_robot.urdf")
     self.tm700Uid = robot
-    p.resetBasePositionAndOrientation(self.tm700Uid, [0.0, 0.0, 0.0], # position of robot
+    p.resetBasePositionAndOrientation(self.tm700Uid, [0.15, 0.0, 0.0], # position of robot, GREEN IS Y AXIS
                                       [0.000000, 0.000000, 1.000000, 0.000000]) # direction of robot
     self.jointPositions = [
-        0.0, 0.0, -0.0, -0.0, 0.0, 0.0, -0.0, 0.0,
-        -0.0, 0.000000, -0.0, 0.0, 0.000000, -0.0, -0.0, -0.0
+        0.0, 0.0, -0, -0, -0.5, -1, -1.57, 0,
+        -0, -0, -0, -0, -0, -0.0, -0.0, -0.0
     ]
 
     self.numJoints = p.getNumJoints(self.tm700Uid)
@@ -58,14 +59,14 @@ class tm700:
                               targetPosition=self.jointPositions[jointIndex],
                               force=self.maxForce)
 
-        print('Link:', p.getLinkState(self.tm700Uid, jointIndex))
+        # print('Link:', p.getLinkState(self.tm700Uid, jointIndex))
 
         # print(p.getJointInfo(robot, jointIndex))
 
 
 
-    self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.640000, #first 3: position, last 4: quaternions
-                              0.075000, -0.0000, 0.000000, 0.000000, 1.000000, 0.000000)
+    self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.6400, #first 3: position, last 4: quaternions
+                              0.0000, 0.001, 0.000000, 0.000000, 1.000000, 0.000000)
     self.endEffectorPos = [0.537, 0.0, 0.5]
     self.endEffectorAngle = 0
 
@@ -165,8 +166,7 @@ class tm700:
         else:
           jointPoses = p.calculateInverseKinematics(self.tm700Uid, self.tmEndEffectorIndex, pos)
 
-      print("jointPoses")
-      print(jointPoses)
+
       #print("self.tmEndEffectorIndex")
       #print(self.tmEndEffectorIndex)
       if (self.useSimulation):
@@ -213,57 +213,16 @@ class tm700:
                                 force=self.maxForce)
 
 
-if __name__ == '__main__':
-
-    # p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-    # p.setGravity(0,0,-10)
-    # # p.setRealTimeSimulation(0)
-    # objects = p.loadURDF('/home/celine/Documents/sp/Gazebo_arm/urdf/tm700_robot.urdf')
-    # print(objects)
-    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    # kukatest = Kuka()
-    # kukatest.reset
-    # for i in range (10000):
-    #     p.stepSimulation()
-    #     time.sleep(1./10.0)
-
-    tm700test = tm700()
-    tm700test.reset
-    tm700test.applyAction([90,1500,1000,90,1000])
-    for i in range (10000):
-        p.stepSimulation()
-        time.sleep(1./240.0)
+# if __name__ == '__main__':
 
 
-
-    #
-    #
     # physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-    # p.setAdditionalSearchPath(pybullet_data.getDataPath()) #optionally
-    # p.setGravity(0,0,-10)
-    # p.setRealTimeSimulation(0)
-    # planeId = p.loadURDF("plane.urdf")
-    # robot = p.loadURDF("/Users/celine/Desktop/sp/Gazebo_arm/urdf/tm700_robot.urdf", useFixedBase=1)
-    # position, orientation = p.getBasePositionAndOrientation(robot)
     #
-    # print(position,orientation)
-    # print('jointinfo', p.getJointInfo(robot, 13))
-    # joint_positions = [j[0] for j in p.getJointStates(robot, range(15))]
-    # print(joint_positions)
-    # p.setJointMotorControlArray(robot, range(15), p.POSITION_CONTROL, targetPositions=[0.7]*15)
+    # tm700test = tm700()
+    # tm700test.reset
+    # tm700test.applyAction([0.67, 0.2, 0.01,-1,5])
     # for i in range (10000):
     #     p.stepSimulation()
     #     time.sleep(1./240.0)
-    # p.resetSimulation()
-
-    # planeId = p.loadURDF("plane.urdf")
-    # robot = p.loadURDF("/home/celine/Documents/sp/Gazebo_arm/urdf/tm700_robot.urdf", useFixedBase=1)
-    # p.setGravity(0,0,-10)
-    # p.setRealTimeSimulation(0)
-    # orientation = p.getQuaternionFromEuler([3.14,0,0])
-    # targetPositionJoints = p.calculateInverseDynamics(robot, 15, [0.1,0.1,0.4], targetOrientation = orientation)
-    # p.setJointMotorControlArray(robot, range(15), p.POSITION_CONTROL, targetPositions = targetPositionJoints, objAccelerations = 4)
-    # for i in range (10000):
-    #     p.stepSimulation()
-    #     time.sleep(1./10.0)
-    p.disconnect()
+    #
+    # p.disconnect()
