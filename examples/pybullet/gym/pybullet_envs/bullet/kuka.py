@@ -8,6 +8,7 @@ import numpy as np
 import copy
 import math
 import pybullet_data
+import time
 
 
 class Kuka:
@@ -217,3 +218,20 @@ class Kuka:
                                 p.POSITION_CONTROL,
                                 targetPosition=motorCommands[action],
                                 force=self.maxForce)
+
+
+if __name__ == '__main__':
+
+
+    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+
+    tm700test = Kuka()
+    tm700test.reset
+    p.setGravity(0,0,-10)
+    tm700test.applyAction([0.67, 0.2, 2.01,0,0])
+    # tm700test.applyAction([0.67, 0.2, 2.01,4.7115925438,0])
+    for i in range (100000):
+        p.stepSimulation()
+        time.sleep(1./240.0)
+
+    p.disconnect()

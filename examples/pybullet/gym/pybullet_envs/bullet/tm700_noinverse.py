@@ -138,12 +138,12 @@ class tm700:
       #print("pos[2] (getLinkState(tmEndEffectorIndex)")
       #print(actualEndEffectorPos[2])
 
-      self.endEffectorPos[0] = self.endEffectorPos[0] + dx
+      self.endEffectorPos[0] =  dx
       # if (self.endEffectorPos[0] > 0.65):
       #   self.endEffectorPos[0] = 0.65
       # if (self.endEffectorPos[0] < 0.50):
       #   self.endEffectorPos[0] = 0.50
-      self.endEffectorPos[1] = self.endEffectorPos[1] + dy
+      self.endEffectorPos[1] = dy
       # if (self.endEffectorPos[1] < -0.17):
       #   self.endEffectorPos[1] = -0.17
       # if (self.endEffectorPos[1] > 0.22):
@@ -154,38 +154,26 @@ class tm700:
       #print("actualEndEffectorPos[2]")
       #print(actualEndEffectorPos[2])
       #if (dz<0 or actualEndEffectorPos[2]<0.5):
-      self.endEffectorPos[2] = self.endEffectorPos[2] + dz
+      self.endEffectorPos[2] = dz
   #
       self.endEffectorAngle = self.endEffectorAngle + da
-      pos = self.endEffectorPos
+      pos = motorCommands[:3]
       orn = p.getQuaternionFromEuler([0, -math.pi, 0])  # -math.pi,yaw])
-      if (self.useNullSpace == 1):
-        if (self.useOrientation == 1):
-          jointPoses = p.calculateInverseKinematics(self.tm700Uid, self.tmEndEffectorIndex, pos,
-                                                    orn, self.ll, self.ul, self.jr, self.rp)
-        else:
-          jointPoses = p.calculateInverseKinematics(self.tm700Uid,
-                                                    self.tmEndEffectorIndex,
-                                                    pos)
-                                                    # lowerLimits=self.ll,
-                                                    # upperLimits=self.ul,
-                                                    # jointRanges=self.jr,
-                                                    # restPoses=self.rp)
+
+      if (self.useOrientation == 1):
+        jointPoses = p.calculateInverseKinematics(self.tm700Uid,
+                                                self.tmEndEffectorIndex,
+                                                pos,
+                                                orn,
+                                                jointDamping=self.jd)
       else:
-        if (self.useOrientation == 1):
-          jointPoses = p.calculateInverseKinematics(self.tm700Uid,
-                                                    self.tmEndEffectorIndex,
-                                                    pos,
-                                                    orn,
-                                                    jointDamping=self.jd)
-        else:
-          jointPoses = p.calculateInverseKinematics(self.tm700Uid, self.tmEndEffectorIndex, pos)
+        jointPoses = p.calculateInverseKinematics(self.tm700Uid, self.tmEndEffectorIndex, pos)
 
 
       #print("self.tmEndEffectorIndex")
       #print(self.tmEndEffectorIndex)
       if (self.useSimulation):
-        for i in range(self.tmEndEffectorIndex):
+        for i in range(self.tmEndEffectorIndex+1):
 
           p.setJointMotorControl2(bodyUniqueId=self.tm700Uid,
                                   jointIndex=i,
@@ -196,37 +184,6 @@ class tm700:
                                   maxVelocity=self.maxVelocity,
                                   positionGain=0.3,
                                   velocityGain=1)
-      else:
-        #reset the joint state (ignoring all dynamics, not recommended to use during simulation)
-        for i in range(self.numJoints):
-          p.resetJointState(self.tm700Uid, i, jointPoses[i])
-      #fingers
-      # p.setJointMotorControl2(self.tm700Uid,
-      #                         7,
-      #                         p.POSITION_CONTROL,
-      #                         targetPosition=self.endEffectorAngle,
-      #                         force=self.maxForce)
-
-      p.setJointMotorControl2(self.tm700Uid,
-                              11,
-                              p.POSITION_CONTROL,
-                              targetPosition=0,
-                              force=self.fingerTipForce)
-      p.setJointMotorControl2(self.tm700Uid,
-                              12,
-                              p.POSITION_CONTROL,
-                              targetPosition=0,
-                              force=self.fingerTipForce)
-
-
-    else:
-      for action in range(len(motorCommands)):
-        motor = self.motorIndices[action]
-        p.setJointMotorControl2(self.tm700Uid,
-                                motor,
-                                p.POSITION_CONTROL,
-                                targetPosition=motorCommands[action],
-                                force=self.maxForce)
 
   def print_joint_state(self):
     print(p.getLinkState(self.tm700Uid, self.tmEndEffectorIndex))
@@ -240,7 +197,8 @@ if __name__ == '__main__':
     tm700test = tm700()
     tm700test.reset
     p.setGravity(0,0,-10)
-    tm700test.applyAction([0.67, 0.2, 0.05,0,0])
+    #tm700test.applyAction([0.67, 0.2, 0.05,0,0])
+    tm700test.applyAction([0, 0, 1, 0, 0])
     for i in range (10000):
         p.stepSimulation()
         tm700test.print_joint_state()

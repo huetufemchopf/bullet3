@@ -88,7 +88,7 @@ class tm700GymEnv(gym.Env):
     ypos = 0 + 0.2# * random.random()
     ang = 3.14 * 0.5 + 3.1415925438 * random.random()
     orn = p.getQuaternionFromEuler([0, 0, ang])
-    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, 0.01,
+    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, 0.15,
                                orn[0], orn[1], orn[2], orn[3])
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
     print('BLOCK INFO:',blockPos, blockOrn)
@@ -310,4 +310,9 @@ if __name__ == '__main__':
   test =tm700GymEnv()
   # test.reset()
   test.step2([0.67, 0.2, 0.01,  -0.0, 0.0])
+  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
+  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
+
+  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
+
   time.sleep(50)

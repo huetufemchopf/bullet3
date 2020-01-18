@@ -29,7 +29,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
                isDiscrete=True,
                maxSteps=8,
                dv=0.06,
-               removeHeightHack=True,
+               removeHeightHack=False,
                blockRandom=0.3,
                cameraRandom=0,
                width=48,
@@ -62,7 +62,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
     """
 
     self._isDiscrete = isDiscrete
-    self._timeStep = 1. / 10.
+    self._timeStep = 1. / 240.
     self._urdfRoot = urdfRoot
     self._actionRepeat = actionRepeat
     self._isEnableSelfCollision = isEnableSelfCollision
@@ -113,7 +113,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
     """
     # Set the camera settings.
     look = [0.23, 0.2, 0.54]
-    distance = 6.
+    distance = 1.
     pitch = -56 + self._cameraRandom * np.random.uniform(-3, 3)
     yaw = 245 + self._cameraRandom * np.random.uniform(-3, 3)
     roll = 0
@@ -165,7 +165,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
       angle = np.pi / 2 + self._blockRandom * np.pi * random.random()
       orn = p.getQuaternionFromEuler([0, 0, angle])
       urdf_path = os.path.join(self._urdfRoot, urdf_name)
-      uid = p.loadURDF(urdf_path, [xpos, ypos, .1], [orn[0], orn[1], orn[2], orn[3]])
+      uid = p.loadURDF(urdf_path, [xpos, ypos, .15], [orn[0], orn[1], orn[2], orn[3]])
       objectUids.append(uid)
       # Let each object fall to the tray individual, to prevent object
       # intersection.
@@ -249,7 +249,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
     state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
     end_effector_pos = state[0]
     if end_effector_pos[2] <= 0.1:
-      finger_angle = 1
+      finger_angle = 0.3
       for _ in range(500):
         grasp_action = [0, 0, 0, 0, finger_angle]
         self._tm700.applyAction(grasp_action)
@@ -327,12 +327,12 @@ class tm700DiverseObjectEnv(tm700GymEnv):
 
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-# datapath = pybullet_data.getDataPath()
-  p.connect(p.GUI, options="--opencl2")
-  #p.setAdditionalSearchPath(datapath)
-  test = tm700DiverseObjectEnv()
-  test.reset()
-  test.step(1)
-  time.sleep(50)
+#datapath = pybullet_data.getDataPath()
+  # p.connect(p.GUI, options="--opencl2")
+  # #p.setAdditionalSearchPath(datapath)
+  # test =tm700DiverseObjectEnv()
+  # test.
+  # test.step([0, 0, 0, 0, 0, -0.25, 0.25])
+  # time.sleep(50)
