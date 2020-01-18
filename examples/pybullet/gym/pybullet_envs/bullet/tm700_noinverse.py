@@ -139,21 +139,7 @@ class tm700:
       #print(actualEndEffectorPos[2])
 
       self.endEffectorPos[0] =  dx
-      # if (self.endEffectorPos[0] > 0.65):
-      #   self.endEffectorPos[0] = 0.65
-      # if (self.endEffectorPos[0] < 0.50):
-      #   self.endEffectorPos[0] = 0.50
       self.endEffectorPos[1] = dy
-      # if (self.endEffectorPos[1] < -0.17):
-      #   self.endEffectorPos[1] = -0.17
-      # if (self.endEffectorPos[1] > 0.22):
-      #   self.endEffectorPos[1] = 0.22
-
-      #print ("self.endEffectorPos[2]")
-      #print (self.endEffectorPos[2])
-      #print("actualEndEffectorPos[2]")
-      #print(actualEndEffectorPos[2])
-      #if (dz<0 or actualEndEffectorPos[2]<0.5):
       self.endEffectorPos[2] = dz
   #
       self.endEffectorAngle = self.endEffectorAngle + da
@@ -169,9 +155,6 @@ class tm700:
       else:
         jointPoses = p.calculateInverseKinematics(self.tm700Uid, self.tmEndEffectorIndex, pos)
 
-
-      #print("self.tmEndEffectorIndex")
-      #print(self.tmEndEffectorIndex)
       if (self.useSimulation):
         for i in range(self.tmEndEffectorIndex+1):
 
