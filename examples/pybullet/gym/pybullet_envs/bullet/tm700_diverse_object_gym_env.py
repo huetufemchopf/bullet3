@@ -62,7 +62,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
     """
 
     self._isDiscrete = isDiscrete
-    self._timeStep = 1. / 240.
+    self._timeStep = 1. / 40.
     self._urdfRoot = urdfRoot
     self._actionRepeat = actionRepeat
     self._isEnableSelfCollision = isEnableSelfCollision
@@ -92,7 +92,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
       self.cid = p.connect(p.SHARED_MEMORY)
       if (self.cid < 0):
         self.cid = p.connect(p.GUI)
-      p.resetDebugVisualizerCamera(1.3, 180, -41, [0.52, -0.2, -0.33])
+      p.resetDebugVisualizerCamera(1.3, 180, -41, [0.52, -0.2, -0.33]) # cameraposition of rendering
     else:
       self.cid = p.connect(p.DIRECT)
     self.seed()
@@ -327,12 +327,11 @@ class tm700DiverseObjectEnv(tm700GymEnv):
 
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 
-#datapath = pybullet_data.getDataPath()
-  # p.connect(p.GUI, options="--opencl2")
-  # #p.setAdditionalSearchPath(datapath)
-  # test =tm700DiverseObjectEnv()
-  # test.
+  datapath = pybullet_data.getDataPath()
+  p.connect(p.GUI, options="--opencl2")
+  #p.setAdditionalSearchPath(datapath)
+  test =tm700DiverseObjectEnv()
   # test.step([0, 0, 0, 0, 0, -0.25, 0.25])
-  # time.sleep(50)
+  time.sleep(50)

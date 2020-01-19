@@ -19,10 +19,10 @@ class tm700:
     self.fingerTipForce = 2
     self.useInverseKinematics = 1
     self.useSimulation = 1
-    self.useNullSpace = 21
+    self.useNullSpace = 1
     self.useOrientation = 0
-    self.tmEndEffectorIndex = 7
-    self.tmGripperIndex = 10
+    self.tmEndEffectorIndex = 6
+    self.tmGripperIndex = 6
     # lower limits for null space
     # self.ll = [-.967, -2, -2.96, 0.19, -2.96, -2.09, -3.05]
     self.ll = [-10, -10, -10, -10, -10, -10, -10]
@@ -36,22 +36,21 @@ class tm700:
     # restposes for null space
     self.rp = [0, 0, 0, 0.5 * math.pi, 0, -math.pi * 0.5 * 0.66, 0]
     # joint damping coefficents
-    self.jd = [
-        0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001,
-        0.00001, 0.00001, 0.00001, 0.00001
-    ]
+    self.jd = None
+    #     [
+    #     0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001, 0.00001,
+    #     0.00001, 0.00001, 0.00001, 0.00001
+    # ]
     self.reset()
 
   def reset(self):
 
-    robot = p.loadURDF("../Gazebo_arm/urdf/tm700_robot.urdf")
+    robot = p.loadURDF("../Gazebo_arm/urdf/tm700_robot_clean.urdf")
     self.tm700Uid = robot
     p.resetBasePositionAndOrientation(self.tm700Uid, [0.0, 0.0, 0.0], # position of robot, GREEN IS Y AXIS
                                       [0.000000, 0.000000, 1.000000, 0.000000]) # direction of robot
     self.jointPositions = [
-        0.0, 0.0, -0, -0, -0.5, -1, -1.57, 0,
-        -0, -0, -0, -0, -0, -0.0, -0.0, -0.0
-    ]
+        0.0, -0, -0.5, -0.5, -1.6, -3, -0, 1.5, -0.02,0.02] # position 6 is actually gripper joint
 
     self.numJoints = p.getNumJoints(self.tm700Uid)
     for jointIndex in range(self.numJoints):
@@ -62,28 +61,12 @@ class tm700:
                               targetPosition=self.jointPositions[jointIndex],
                               force=self.maxForce)
 
-        # print('Link:', p.getLinkState(self.tm700Uid, jointIndex))
+        print(p.getJointInfo(robot, jointIndex))
 
-        # print(p.getJointInfo(robot, jointIndex))
-
-
-    #
-    # self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.6400, #first 3: position, last 4: quaternions
-    #                           0.0000, 0.001, 0.000000, 0.000000, 1.000000, 0.000000)
+    self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.6400, #first 3: position, last 4: quaternions
+                              0.0000, -0.19, 0.000000, 0.000000, 1.000000, 0.000000)
     self.endEffectorPos = [0.537, 0.0, 0.5]
-    self.endEffectorAngle = 0
-
-
-# BLOCK
-    xpos = 0.55 + 0.12  # * random.random()
-    ypos = 0 + 0.2  # * random.random()
-    ang = 3.14 * 0.5 + 3.1415925438 #* random.random()
-    orn = p.getQuaternionFromEuler([0, 0, ang])
-    self.blockUid = p.loadURDF(os.path.join(self.urdfRootPath, "block.urdf"), xpos, ypos, 0.05,
-                               orn[0], orn[1], orn[2], orn[3])
-    blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
-    print('BLOCK INFO:', blockPos, blockOrn)
-    print('block:', self.blockUid)
+    self.endEffectorAngle = 0.02
 
     self.motorNames = []
     self.motorIndices = []
@@ -124,6 +107,7 @@ class tm700:
 
   def applyAction(self, motorCommands):
 
+
     #print ("self.numJoints")
     #print (self.numJoints)
     if (self.useInverseKinematics):
@@ -138,23 +122,20 @@ class tm700:
       #print("pos[2] (getLinkState(tmEndEffectorIndex)")
       #print(actualEndEffectorPos[2])
 
-      self.endEffectorPos[0] = self.endEffectorPos[0] + dx
-      # if (self.endEffectorPos[0] > 0.65):
-      #   self.endEffectorPos[0] = 0.65
-      # if (self.endEffectorPos[0] < 0.50):
-      #   self.endEffectorPos[0] = 0.50
-      self.endEffectorPos[1] = self.endEffectorPos[1] + dy
+      self.endEffectorPos[0] =  dx
+
+      self.endEffectorPos[1] =  dy
       # if (self.endEffectorPos[1] < -0.17):
       #   self.endEffectorPos[1] = -0.17
       # if (self.endEffectorPos[1] > 0.22):
       #   self.endEffectorPos[1] = 0.22
-
-      #print ("self.endEffectorPos[2]")
-      #print (self.endEffectorPos[2])
-      #print("actualEndEffectorPos[2]")
-      #print(actualEndEffectorPos[2])
-      #if (dz<0 or actualEndEffectorPos[2]<0.5):
-      self.endEffectorPos[2] = self.endEffectorPos[2] + dz
+      #
+      # print ("self.endEffectorPos[2]")
+      # print (self.endEffectorPos[2])
+      # print("actualEndEffectorPos[2]")
+      # print(actualEndEffectorPos[2])
+      # if (dz<0 or actualEndEffectorPos[2]<0.5):
+      self.endEffectorPos[2] = dz
   #
       self.endEffectorAngle = self.endEffectorAngle + da
       pos = self.endEffectorPos
@@ -200,23 +181,19 @@ class tm700:
         #reset the joint state (ignoring all dynamics, not recommended to use during simulation)
         for i in range(self.numJoints):
           p.resetJointState(self.tm700Uid, i, jointPoses[i])
-      #fingers
-      # p.setJointMotorControl2(self.tm700Uid,
-      #                         7,
-      #                         p.POSITION_CONTROL,
-      #                         targetPosition=self.endEffectorAngle,
-      #                         force=self.maxForce)
+
 
       p.setJointMotorControl2(self.tm700Uid,
-                              11,
-                              p.POSITION_CONTROL,
-                              targetPosition=0,
-                              force=self.fingerTipForce)
+                          8,
+                          p.POSITION_CONTROL,
+                          targetPosition=-1*fingerAngle/4.,
+                          force=self.fingerTipForce)
+
       p.setJointMotorControl2(self.tm700Uid,
-                              12,
-                              p.POSITION_CONTROL,
-                              targetPosition=0,
-                              force=self.fingerTipForce)
+                          9,
+                          p.POSITION_CONTROL,
+                          targetPosition=fingerAngle/4.,
+                          force=self.fingerTipForce)
 
 
     else:
@@ -232,17 +209,39 @@ class tm700:
     print(p.getLinkState(self.tm700Uid, self.tmEndEffectorIndex))
     # print(p.getJointInfo(self.tm700Uid, 7))
 
-if __name__ == '__main__':
+  def grasping(self):
+
+    p.setJointMotorControl2(self.tm700Uid,
+                          8,
+                          p.POSITION_CONTROL,
+                          targetPosition=0,
+                          force=self.fingerTipForce)
+    p.setJointMotorControl2(self.tm700Uid,
+                          9,
+                          p.POSITION_CONTROL,
+                          targetPosition=0,
+                          force=self.fingerTipForce)
 
 
-    physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
-
-    tm700test = tm700()
-    tm700test.reset
-    p.setGravity(0,0,-10)
-    tm700test.applyAction([0.67, 0.2, 0.05,0,0])
-    for i in range (10000):
-        p.stepSimulation()
-        tm700test.print_joint_state()
-        time.sleep(1./240.0)
-    p.disconnect()
+#
+# if __name__ == '__main__':
+#
+#
+#     physicsClient = p.connect(p.GUI)#or p.DIRECT for non-graphical version
+#     tm700test = tm700()
+#     # tm700test.reset
+#     p.setGravity(0,0,-10)
+#     tm700test.applyAction([0.67, 0.2, 0.05,1,0.1])
+#     for i in range (1000):
+#         p.stepSimulation()
+#         # tm700test.print_joint_state()
+#         time.sleep(1./240.0)
+#     # tm700test.grasping()
+#     # tm700test.applyAction([0.67, 0.2, 0.15,0.2,0.20])
+#     # for i in range (10000):
+#     #     p.stepSimulation()
+#     #     # tm700test.print_joint_state()
+#         time.sleep(1./240.0)
+#
+#
+#     p.disconnect()

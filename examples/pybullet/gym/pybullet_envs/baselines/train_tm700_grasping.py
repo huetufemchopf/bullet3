@@ -5,10 +5,10 @@ parentdir = os.path.dirname(os.path.dirname(currentdir))
 os.sys.path.insert(0, parentdir)
 
 import gym
-from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
 from pybullet_envs.bullet.tm700_diverse_object_gym_env import tm700DiverseObjectEnv
+from pybullet_envs.bullet.tm700GymEnv_TEST import tm700GymEnv2
+from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
 from pybullet_envs.bullet.tm700GymEnv import tm700GymEnv
-from pybullet_envs.bullet.kukaCamGymEnv import KukaCamGymEnv
 from stable_baselines import deepq
 from stable_baselines import DQN, PPO2, DDPG
 import datetime
@@ -27,8 +27,9 @@ def callback(lcl, glb):
 
 def main():
 
-  env1 = tm700DiverseObjectEnv(renders=True, isDiscrete=False)
+  env1 = tm700GymEnv2(renders=True, isDiscrete=False)
   model = DDPG(MlpPolicy, env1, verbose=1)
+ # model = DQN(MlpPolicy, env1, verbose=1)
 
   # = deepq.models.mlp([64])
   model.learn(total_timesteps=500000)

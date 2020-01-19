@@ -3,7 +3,6 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 print("current_dir=" + currentdir)
 os.sys.path.insert(0, currentdir)
 
-import math
 import gym
 from gym import spaces
 from gym.utils import seeding
@@ -11,7 +10,6 @@ import numpy as np
 import time
 import pybullet as p
 import tm700
-# from . import tm700
 import random
 import pybullet_data
 from pkg_resources import parse_version
@@ -48,6 +46,10 @@ class tm700GymEnv(gym.Env):
     self._cam_pitch = -40
 
     self._p = p
+
+
+    #### RENDERING
+
     if self._renders:
       cid = p.connect(p.SHARED_MEMORY)
       if (cid < 0):
@@ -55,14 +57,13 @@ class tm700GymEnv(gym.Env):
       p.resetDebugVisualizerCamera(1.3, 180, -30, [0.52, -0.2, -0.33]) #????????????
     else:
       p.connect(p.DIRECT)
-    #timinglog = p.startStateLogging(p.STATE_LOGGING_PROFILE_TIMINGS, "tm700Timings.json")
     self.seed()
     self.reset()
     observationDim = len(self.getExtendedObservation())
-    #print("observationDim")
-    #print(observationDim)
-
     observation_high = np.array([largeValObservation] * observationDim)
+
+    #### DISCRETENESS
+
     if (self._isDiscrete):
       self.action_space = spaces.Discrete(7)
     else:
@@ -74,31 +75,30 @@ class tm700GymEnv(gym.Env):
     self.viewer = None
 
   def reset(self):
-    #print("tm700GymEnv _reset")
+
     self.terminated = 0
     p.resetSimulation()
     p.setPhysicsEngineParameter(numSolverIterations=150)
     p.setTimeStep(self._timeStep)
     p.loadURDF(os.path.join(self._urdfRoot, "plane.urdf"), [0, 0, -1])
 
-    p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.820000,
+    p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.80000,
                0.000000, 0.000000, 0.0, 1.0)
 
-    xpos = 0.55 + 0.12 # * random.random()
-    ypos = 0 + 0.2# * random.random()
+    xpos = 0.55 + 0.12 * random.random()
+    ypos = 0 + 0.2 * random.random()
     ang = 3.14 * 0.5 + 3.1415925438 * random.random()
     orn = p.getQuaternionFromEuler([0, 0, ang])
-    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, 0.15,
+    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, -0.10,
                                orn[0], orn[1], orn[2], orn[3])
-    blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
-    print('BLOCK INFO:',blockPos, blockOrn)
-    print('block:', self.blockUid)
-    p.setGravity(0, 0, -10)
+
+    p.setGravity(0,0,-10)
+
     self._tm700 = tm700.tm700(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
-    return np.array(self._observation)
+    return np.array(self._observation) # prints joints status i think
 
   def __del__(self):
     p.disconnect()
@@ -133,22 +133,16 @@ class tm700GymEnv(gym.Env):
                                                                 blockPos, blockOrn)
     projectedBlockPos2D = [blockPosInGripper[0], blockPosInGripper[1]]
     blockEulerInGripper = p.getEulerFromQuaternion(blockOrnInGripper)
-    #print("projectedBlockPos2D")
-    #print(projectedBlockPos2D)
-    #print("blockEulerInGripper")
-    #print(blockEulerInGripper)
 
     #we return the relative x,y position and euler angle of block in gripper space
     blockInGripperPosXYEulZ = [blockPosInGripper[0], blockPosInGripper[1], blockEulerInGripper[2]]
 
-    #p.addUserDebugLine(gripperPos,[gripperPos[0]+dir0[0],gripperPos[1]+dir0[1],gripperPos[2]+dir0[2]],[1,0,0],lifeTime=1)
-    #p.addUserDebugLine(gripperPos,[gripperPos[0]+dir1[0],gripperPos[1]+dir1[1],gripperPos[2]+dir1[2]],[0,1,0],lifeTime=1)
-    #p.addUserDebugLine(gripperPos,[gripperPos[0]+dir2[0],gripperPos[1]+dir2[1],gripperPos[2]+dir2[2]],[0,0,1],lifeTime=1)
-
     self._observation.extend(list(blockInGripperPosXYEulZ))
+    # print(self._observation)
     return self._observation
 
   def step(self, action):
+
     if (self._isDiscrete):
       dv = 0.005
       dx = [0, -dv, dv, 0, 0, 0, 0][action]
@@ -157,16 +151,18 @@ class tm700GymEnv(gym.Env):
       f = 0.3
       realAction = [dx, dy, -0.002, da, f]
     else:
-      #print("action[0]=", str(action[0]))
-      dv = 0.005
+      # print("action[0]=", str(action[0]))
+      # print("action=", str(action))
+      dv = 0.002
       dx = action[0] * dv
       dy = action[1] * dv
       da = action[2] * 0.05
-      f = 0.3
+      f = 0.1
       realAction = [dx, dy, -0.002, da, f]
     return self.step2(realAction)
 
   def step2(self, action):
+
     for i in range(self._actionRepeat):
       self._tm700.applyAction(action)
       p.stepSimulation()
@@ -177,20 +173,10 @@ class tm700GymEnv(gym.Env):
       time.sleep(self._timeStep)
     self._observation = self.getExtendedObservation()
 
-    #print("self._envStepCounter")
-    #print(self._envStepCounter)
-
     done = self._termination()
-    npaction = np.array([
-        action[3]
-    ])  #only penalize rotation until learning works well [action[0],action[1],action[3]])
+    npaction = np.array([action[3]])  #only penalize rotation until learning works well [action[0],action[1],action[3]])
     actionCost = np.linalg.norm(npaction) * 10.
-    #print("actionCost")
-    #print(actionCost)
     reward = self._reward() - actionCost
-    #print("reward")
-    #print(reward)
-
     #print("len=%r" % len(self._observation))
 
     return np.array(self._observation), reward, done, {}
@@ -224,7 +210,6 @@ class tm700GymEnv(gym.Env):
     return rgb_array
 
   def _termination(self):
-    #print (self._tm700.endEffectorPos[2])
     state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
     actualEndEffectorPos = state[0]
 
@@ -290,7 +275,7 @@ class tm700GymEnv(gym.Env):
       #print("self._envStepCounter")
       #print(self._envStepCounter)
       #print("reward")
-      #print(reward)
+    print(reward)
     #print("reward")
     #print(reward)
     return reward
@@ -308,11 +293,6 @@ if __name__ == '__main__':
   p.connect(p.GUI, options="--opencl2")
   #p.setAdditionalSearchPath(datapath)
   test =tm700GymEnv()
-  # test.reset()
-  test.step2([0.67, 0.2, 0.01,  -0.0, 0.0])
-  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
-  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
-
-  test.step2([0.67, 0.2, 0.01, -0.0, 0.0])
-
+  for i in range(10000):
+    test.step2([0,0,0,0,0])
   time.sleep(50)

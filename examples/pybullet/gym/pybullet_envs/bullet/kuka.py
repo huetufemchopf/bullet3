@@ -228,7 +228,7 @@ if __name__ == '__main__':
     tm700test = Kuka()
     tm700test.reset
     p.setGravity(0,0,-10)
-    tm700test.applyAction([0.67, 0.2, 2.01,0,0])
+    tm700test.applyAction([0.67, 0.2, 2.01,0,0.4])
     # tm700test.applyAction([0.67, 0.2, 2.01,4.7115925438,0])
     for i in range (100000):
         p.stepSimulation()

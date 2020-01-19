@@ -37,7 +37,7 @@ prevPose1 = [0, 0, 0]
 hasPrevPose = 0
 useNullSpace = 1
 
-useOrientation = 1
+useOrientation = 0
 #If we set useSimulation=0, it sets the arm pose to be the IK result directly without using dynamic control.
 #This can be used to test the IK result accuracy.
 useSimulation = 1

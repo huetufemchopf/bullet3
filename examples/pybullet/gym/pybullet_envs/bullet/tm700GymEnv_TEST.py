@@ -3,15 +3,13 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 print("current_dir=" + currentdir)
 os.sys.path.insert(0, currentdir)
 
-import math
 import gym
 from gym import spaces
 from gym.utils import seeding
 import numpy as np
 import time
 import pybullet as p
-# from . import kuka
-import kuka
+import tm700
 import random
 import pybullet_data
 from pkg_resources import parse_version
@@ -22,7 +20,7 @@ RENDER_HEIGHT = 720
 RENDER_WIDTH = 960
 
 
-class KukaGymEnv(gym.Env):
+class tm700GymEnv2(gym.Env):
   metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
 
   def __init__(self,
@@ -55,7 +53,7 @@ class KukaGymEnv(gym.Env):
       p.resetDebugVisualizerCamera(1.3, 180, -41, [0.52, -0.2, -0.33])
     else:
       p.connect(p.DIRECT)
-    #timinglog = p.startStateLogging(p.STATE_LOGGING_PROFILE_TIMINGS, "kukaTimings.json")
+    #timinglog = p.startStateLogging(p.STATE_LOGGING_PROFILE_TIMINGS, "tm700Timings.json")
     self.seed()
     self.reset()
     observationDim = len(self.getExtendedObservation())
@@ -92,7 +90,7 @@ class KukaGymEnv(gym.Env):
                                orn[0], orn[1], orn[2], orn[3])
 
     p.setGravity(0, 0, -10)
-    self._kuka = kuka.Kuka(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
+    self._tm700 = tm700.tm700(urdfRootPath=self._urdfRoot, timeStep=self._timeStep)
     self._envStepCounter = 0
     p.stepSimulation()
     self._observation = self.getExtendedObservation()
@@ -106,8 +104,8 @@ class KukaGymEnv(gym.Env):
     return [seed]
 
   def getExtendedObservation(self):
-    self._observation = self._kuka.getObservation()
-    gripperState = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaGripperIndex)
+    self._observation = self._tm700.getObservation()
+    gripperState = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmGripperIndex)
     gripperPos = gripperState[0]
     gripperOrn = gripperState[1]
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
@@ -142,15 +140,16 @@ class KukaGymEnv(gym.Env):
 
   def step(self, action):
     if (self._isDiscrete):
-      dv = 0.005
+      pass
+      dv = 0.0005
       dx = [0, -dv, dv, 0, 0, 0, 0][action]
       dy = [0, 0, 0, -dv, dv, 0, 0][action]
       da = [0, 0, 0, 0, 0, -0.05, 0.05][action]
       f = 0.3
       realAction = [dx, dy, -0.002, da, f]
     else:
-      #print("action[0]=", str(action[0]))
-      dv = 0.005
+      print("action[0]=", str(action[0]))
+      dv = 0.0005
       dx = action[0] * dv
       dy = action[1] * dv
       da = action[2] * 0.05
@@ -160,7 +159,7 @@ class KukaGymEnv(gym.Env):
 
   def step2(self, action):
     for i in range(self._actionRepeat):
-      self._kuka.applyAction(action)
+      self._tm700.applyAction(action)
       p.stepSimulation()
       if self._termination():
         break
@@ -191,7 +190,7 @@ class KukaGymEnv(gym.Env):
     if mode != "rgb_array":
       return np.array([])
 
-    base_pos, orn = self._p.getBasePositionAndOrientation(self._kuka.kukaUid)
+    base_pos, orn = self._p.getBasePositionAndOrientation(self._tm700.tm700Uid)
     view_matrix = self._p.computeViewMatrixFromYawPitchRoll(cameraTargetPosition=base_pos,
                                                             distance=self._cam_dist,
                                                             yaw=self._cam_yaw,
@@ -216,8 +215,8 @@ class KukaGymEnv(gym.Env):
     return rgb_array
 
   def _termination(self):
-    #print (self._kuka.endEffectorPos[2])
-    state = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)
+    #print (self._tm700.endEffectorPos[2])
+    state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
     actualEndEffectorPos = state[0]
 
     #print("self._envStepCounter")
@@ -226,7 +225,7 @@ class KukaGymEnv(gym.Env):
       self._observation = self.getExtendedObservation()
       return True
     maxDist = 0.005
-    closestPoints = p.getClosestPoints(self._kuka.trayUid, self._kuka.kukaUid, maxDist)
+    closestPoints = p.getClosestPoints(self._tm700.trayUid, self._tm700.tm700Uid, maxDist)
 
     if (len(closestPoints)):  #(actualEndEffectorPos[2] <= -0.43):
       self.terminated = 1
@@ -236,7 +235,7 @@ class KukaGymEnv(gym.Env):
       fingerAngle = 0.3
       for i in range(100):
         graspAction = [0, 0, 0.0001, 0, fingerAngle]
-        self._kuka.applyAction(graspAction)
+        self._tm700.applyAction(graspAction)
         p.stepSimulation()
         fingerAngle = fingerAngle - (0.3 / 100.)
         if (fingerAngle < 0):
@@ -244,14 +243,14 @@ class KukaGymEnv(gym.Env):
 
       for i in range(1000):
         graspAction = [0, 0, 0.001, 0, fingerAngle]
-        self._kuka.applyAction(graspAction)
+        self._tm700.applyAction(graspAction)
         p.stepSimulation()
         blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
         if (blockPos[2] > 0.23):
           #print("BLOCKPOS!")
           #print(blockPos[2])
           break
-        state = p.getLinkState(self._kuka.kukaUid, self._kuka.kukaEndEffectorIndex)
+        state = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmEndEffectorIndex)
         actualEndEffectorPos = state[0]
         if (actualEndEffectorPos[2] > 0.5):
           break
@@ -264,8 +263,8 @@ class KukaGymEnv(gym.Env):
 
     #rewards is height of target object
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
-    closestPoints = p.getClosestPoints(self.blockUid, self._kuka.kukaUid, 1000, -1,
-                                       self._kuka.kukaEndEffectorIndex)
+    closestPoints = p.getClosestPoints(self.blockUid, self._tm700.tm700Uid, 1000, -1,
+                                       self._tm700.tmEndEffectorIndex)
 
     reward = -1000
 
