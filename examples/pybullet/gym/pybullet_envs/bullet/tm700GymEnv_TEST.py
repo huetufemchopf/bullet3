@@ -18,6 +18,8 @@ largeValObservation = 100
 
 RENDER_HEIGHT = 720
 RENDER_WIDTH = 960
+maxSteps = 400
+Dv = 0.004
 
 
 class tm700GymEnv2(gym.Env):
@@ -29,7 +31,7 @@ class tm700GymEnv2(gym.Env):
                isEnableSelfCollision=True,
                renders=False,
                isDiscrete=False,
-               maxSteps=1000):
+               maxSteps=maxSteps):
     #print("KukaGymEnv __init__")
     self._isDiscrete = isDiscrete
     self._timeStep = 1. / 240.
@@ -67,6 +69,7 @@ class tm700GymEnv2(gym.Env):
       action_dim = 3
       self._action_bound = 1
       action_high = np.array([self._action_bound] * action_dim)
+      print(action_high)
       self.action_space = spaces.Box(-action_high, action_high)
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
@@ -79,14 +82,14 @@ class tm700GymEnv2(gym.Env):
     p.setTimeStep(self._timeStep)
     p.loadURDF(os.path.join(self._urdfRoot, "plane.urdf"), [0, 0, -1])
 
-    p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.820000,
+    self.tableUid = p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.640000,
                0.000000, 0.000000, 0.0, 1.0)
 
-    xpos = 0.55 + 0.12 * random.random()
-    ypos = 0 + 0.2 * random.random()
-    ang = 3.14 * 0.5 + 3.1415925438 * random.random()
+    xpos = 0.55  #* random.random()
+    ypos = 0  #* random.random()
+    ang = 3.14 * 0.5 +1.5 #* random.random()
     orn = p.getQuaternionFromEuler([0, 0, ang])
-    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "block.urdf"), xpos, ypos, -0.15,
+    self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "jenga/jenga.urdf"), xpos, ypos, 0.1,
                                orn[0], orn[1], orn[2], orn[3])
 
     p.setGravity(0, 0, -10)
@@ -141,20 +144,20 @@ class tm700GymEnv2(gym.Env):
   def step(self, action):
     if (self._isDiscrete):
       pass
-      dv = 0.0005
+      dv = Dv
       dx = [0, -dv, dv, 0, 0, 0, 0][action]
       dy = [0, 0, 0, -dv, dv, 0, 0][action]
       da = [0, 0, 0, 0, 0, -0.05, 0.05][action]
-      f = 0.3
-      realAction = [dx, dy, -0.002, da, f]
+      f = 0.15
+      realAction = [dx, dy, -0.0005, da, f]
     else:
-      print("action[0]=", str(action[0]))
-      dv = 0.0005
+      # print("action[0]=", str(action[0]))
+      dv = Dv
       dx = action[0] * dv
       dy = action[1] * dv
       da = action[2] * 0.05
-      f = 0.3
-      realAction = [dx, dy, -0.002, da, f]
+      f = 0.15
+      realAction = [dx, dy, -0.0005, da, f]
     return self.step2(realAction)
 
   def step2(self, action):
@@ -224,15 +227,15 @@ class tm700GymEnv2(gym.Env):
     if (self.terminated or self._envStepCounter > self._maxSteps):
       self._observation = self.getExtendedObservation()
       return True
-    maxDist = 0.005
-    closestPoints = p.getClosestPoints(self._tm700.trayUid, self._tm700.tm700Uid, maxDist)
+    maxDist = 0.006
+    closestPoints = p.getClosestPoints(self.tableUid, self._tm700.tm700Uid, maxDist, -1, self._tm700.tmFingerIndexL)
 
     if (len(closestPoints)):  #(actualEndEffectorPos[2] <= -0.43):
       self.terminated = 1
 
       #print("terminating, closing gripper, attempting grasp")
       #start grasp and terminate
-      fingerAngle = 0.3
+      fingerAngle = 0.15
       for i in range(100):
         graspAction = [0, 0, 0.0001, 0, fingerAngle]
         self._tm700.applyAction(graspAction)
@@ -263,18 +266,30 @@ class tm700GymEnv2(gym.Env):
 
     #rewards is height of target object
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
-    closestPoints = p.getClosestPoints(self.blockUid, self._tm700.tm700Uid, 1000, -1,
-                                       self._tm700.tmEndEffectorIndex)
+    closestPoints1 = p.getClosestPoints(self.blockUid, self._tm700.tm700Uid, 10, -1,
+                                       self._tm700.tmFingerIndexL)
+    closestPoints2 = p.getClosestPoints(self.blockUid, self._tm700.tm700Uid, 10, -1,
+                                       self._tm700.tmFingerIndexR) # id of object a, id of object b, max. separation, link index of object a (base is -1), linkindex of object b
+
+    # fingerL = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmFingerIndexL)
+    # fingerR = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmFingerIndexR)
+    # print('infi', np.mean(list(fingerL[0])))
+
 
     reward = -1000
 
-    numPt = len(closestPoints)
+    # print(closestPoints1[0][8])
+    closestPoints = closestPoints1[0][8]
+    numPt = len(closestPoints1)
     #print(numPt)
     if (numPt > 0):
       #print("reward:")
-      reward = -closestPoints[0][8] * 10
+      # reward = -1./((1.-closestPoints1[0][8] * 100 + 1. -closestPoints2[0][8] * 100 )/2)
+      reward = -(closestPoints1[0][8] * 10 + 1. -closestPoints2[0][8] * 10 )/2
+      # reward = 1/((abs(closestPoints1[0][8])   + abs(closestPoints2[0][8])*10 )**2 / 2)
+      # reward = 1/closestPoints1[0][8]+1/closestPoints2[0][8]
     if (blockPos[2] > 0.2):
-      reward = reward + 10000
+      reward = reward + 100
       print("successfully grasped a block!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
@@ -282,8 +297,8 @@ class tm700GymEnv2(gym.Env):
       #print(self._envStepCounter)
       #print("reward")
       #print(reward)
-    #print("reward")
-    #print(reward)
+    # print("reward")
+    print(reward)
     return reward
 
   if parse_version(gym.__version__) < parse_version('0.9.6'):
