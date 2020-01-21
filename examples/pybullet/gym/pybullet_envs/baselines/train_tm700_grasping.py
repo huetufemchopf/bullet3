@@ -15,6 +15,7 @@ from stable_baselines.her import GoalSelectionStrategy, HERGoalEnvWrapper
 import datetime
 # from stable_baselines.deepq.policies import MlpPolicy
 from stable_baselines.ddpg.policies import DDPGPolicy,MlpPolicy
+import time
 
 def callback(lcl, glb):
   # stop training if reward exceeds 199
@@ -26,23 +27,27 @@ def callback(lcl, glb):
   return is_solved
 
 
-def main():
 
-  env1 = tm700GymEnv2(renders=True, isDiscrete=False)
-  model = DDPG(MlpPolicy, env1, verbose=1)
+
+def main():
+  param_noise = None
+
+  env1 = tm700GymEnv2(renders=False, isDiscrete=False)
+  model = DDPG(MlpPolicy, env1, verbose=1, param_noise=param_noise, random_exploration=0.1)
   # model = DQN(MlpPolicy, env1, verbose=1, exploration_fraction=0.3)
 
   # = deepq.models.mlp([64])
-  model.learn(total_timesteps=500000)
+  start = time.time()
+  model.learn(total_timesteps=1000000)
                     #max_timesteps=10000000,
                     # exploration_fraction=0.1,
                     # exploration_final_eps=0.02,
-  env1 = tm700GymEnv2(renders=True, isDiscrete=True)
                     # print_freq=10,
                     # callback=callback, network='mlp')
   print("Saving model to kukadiverse_model.pkl")
   model.save("tm_test_model.pkl")
 
+  print('total time', time.time()-start)
 
 def heralgorithm():
 

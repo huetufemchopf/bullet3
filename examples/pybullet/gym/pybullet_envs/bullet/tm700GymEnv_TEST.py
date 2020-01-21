@@ -18,7 +18,7 @@ largeValObservation = 100
 
 RENDER_HEIGHT = 720
 RENDER_WIDTH = 960
-maxSteps = 400
+maxSteps = 550
 Dv = 0.004
 
 
@@ -69,7 +69,7 @@ class tm700GymEnv2(gym.Env):
       action_dim = 3
       self._action_bound = 1
       action_high = np.array([self._action_bound] * action_dim)
-      print(action_high)
+      # print(action_high)
       self.action_space = spaces.Box(-action_high, action_high)
     self.observation_space = spaces.Box(-observation_high, observation_high)
     self.viewer = None
@@ -108,7 +108,7 @@ class tm700GymEnv2(gym.Env):
 
   def getExtendedObservation(self):
     self._observation = self._tm700.getObservation()
-    gripperState = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmGripperIndex)
+    gripperState = p.getLinkState(self._tm700.tm700Uid, self._tm700.tmFingerIndexL)
     gripperPos = gripperState[0]
     gripperOrn = gripperState[1]
     blockPos, blockOrn = p.getBasePositionAndOrientation(self.blockUid)
@@ -285,11 +285,11 @@ class tm700GymEnv2(gym.Env):
     if (numPt > 0):
       #print("reward:")
       # reward = -1./((1.-closestPoints1[0][8] * 100 + 1. -closestPoints2[0][8] * 100 )/2)
-      reward = -(closestPoints1[0][8] * 10 + 1. -closestPoints2[0][8] * 10 )/2
+      reward = -((closestPoints1[0][8]) + (closestPoints2[0][8]) )*(1/2)*(1/0.17849278457978357)
       # reward = 1/((abs(closestPoints1[0][8])   + abs(closestPoints2[0][8])*10 )**2 / 2)
       # reward = 1/closestPoints1[0][8]+1/closestPoints2[0][8]
     if (blockPos[2] > 0.2):
-      reward = reward + 100
+      reward = reward + 1000
       print("successfully grasped a block!!!")
       #print("self._envStepCounter")
       #print(self._envStepCounter)
@@ -298,7 +298,7 @@ class tm700GymEnv2(gym.Env):
       #print("reward")
       #print(reward)
     # print("reward")
-    print(reward)
+    # print(reward)
     return reward
 
   if parse_version(gym.__version__) < parse_version('0.9.6'):

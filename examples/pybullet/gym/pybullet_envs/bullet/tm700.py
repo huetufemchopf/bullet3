@@ -62,8 +62,8 @@ class tm700:
                               p.POSITION_CONTROL,
                               targetPosition=self.jointPositions[jointIndex],
                               force=self.maxForce)
-        print(p.getJointInfo(robot, jointIndex))
-        print(p.getLinkState(robot, jointIndex))
+        # print(p.getJointInfo(robot, jointIndex))
+        # print(p.getLinkState(robot, jointIndex))
 
     # self.trayUid = p.loadURDF(os.path.join(self.urdfRootPath, "tray/tray.urdf"), 0.6400, #first 3: position, last 4: quaternions
     #                           0.0000, -0.19, 0.000000, 0.000000, 1.000000, 0.000000)
@@ -208,7 +208,8 @@ class tm700:
                                 force=self.maxForce)
 
   def print_joint_state(self):
-    print(p.getLinkState(self.tm700Uid, self.tmEndEffectorIndex))
+    pass
+    # print(p.getLinkState(self.tm700Uid, self.tmEndEffectorIndex))
     # print(p.getJointInfo(self.tm700Uid, 7))
 
   def grasping(self):
