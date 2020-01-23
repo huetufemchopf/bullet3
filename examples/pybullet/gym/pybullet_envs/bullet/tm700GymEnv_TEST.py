@@ -85,8 +85,8 @@ class tm700GymEnv2(gym.Env):
     self.tableUid = p.loadURDF(os.path.join(self._urdfRoot, "table/table.urdf"), 0.5000000, 0.00000, -.640000,
                0.000000, 0.000000, 0.0, 1.0)
 
-    xpos = 0.55  #* random.random()
-    ypos = 0  #* random.random()
+    xpos = 0.55 + 0.12 * random.random()
+    ypos = 0 + 0.2 * random.random()
     ang = 3.14 * 0.5 +1.5 #* random.random()
     orn = p.getQuaternionFromEuler([0, 0, ang])
     self.blockUid = p.loadURDF(os.path.join(self._urdfRoot, "jenga/jenga.urdf"), xpos, ypos, 0.1,
@@ -236,15 +236,15 @@ class tm700GymEnv2(gym.Env):
       #print("terminating, closing gripper, attempting grasp")
       #start grasp and terminate
       fingerAngle = 0.15
-      for i in range(100):
-        graspAction = [0, 0, 0.0001, 0, fingerAngle]
+      for i in range(1000):
+        graspAction = [0, 0, 0.0005, 0, fingerAngle]
         self._tm700.applyAction(graspAction)
         p.stepSimulation()
         fingerAngle = fingerAngle - (0.3 / 100.)
         if (fingerAngle < 0):
           fingerAngle = 0
 
-      for i in range(1000):
+      for i in range(10000):
         graspAction = [0, 0, 0.001, 0, fingerAngle]
         self._tm700.applyAction(graspAction)
         p.stepSimulation()

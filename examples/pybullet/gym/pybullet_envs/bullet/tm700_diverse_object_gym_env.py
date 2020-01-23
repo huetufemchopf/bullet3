@@ -1,4 +1,3 @@
-from pybullet_envs.bullet.tm700GymEnv import tm700GymEnv
 import random
 import os
 from gym import spaces
@@ -12,9 +11,10 @@ import distutils.dir_util
 import glob
 from pkg_resources import parse_version
 import gym
+from pybullet_envs.bullet.tm700GymEnv_TEST import tm700GymEnv2
 
 
-class tm700DiverseObjectEnv(tm700GymEnv):
+class tm700DiverseObjectEnv(tm700GymEnv2):
   """Class for tm700 environment with diverse objects.
 
   In each episode some objects are chosen from a set of 1000 diverse objects.
@@ -63,7 +63,7 @@ class tm700DiverseObjectEnv(tm700GymEnv):
 
     self._isDiscrete = isDiscrete
     self._timeStep = 1. / 40.
-    self._urdfRoot = urdfRoot
+    self= urdfRoot
     self._actionRepeat = actionRepeat
     self._isEnableSelfCollision = isEnableSelfCollision
     self._observation = []

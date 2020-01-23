@@ -32,7 +32,7 @@ def callback(lcl, glb):
 def main():
   param_noise = None
 
-  env1 = tm700GymEnv2(renders=False, isDiscrete=False)
+  env1 = tm700GymEnv2(renders=False , isDiscrete=False)
   model = DDPG(MlpPolicy, env1, verbose=1, param_noise=param_noise, random_exploration=0.1)
   # model = DQN(MlpPolicy, env1, verbose=1, exploration_fraction=0.3)
 
@@ -44,8 +44,8 @@ def main():
                     # exploration_final_eps=0.02,
                     # print_freq=10,
                     # callback=callback, network='mlp')
-  print("Saving model to kukadiverse_model.pkl")
-  model.save("tm_test_model.pkl")
+  print("Saving model")
+  model.save("tm_test_model_randomblocksrotated.pkl")
 
   print('total time', time.time()-start)
 
@@ -62,4 +62,4 @@ def heralgorithm():
     model.save("./her_bit_env")
 
 main()
-# heralgorithm()
+

@@ -9,7 +9,6 @@ import gym
 from pybullet_envs.bullet.tm700_diverse_object_gym_env import tm700DiverseObjectEnv
 from pybullet_envs.bullet.tm700GymEnv_TEST import tm700GymEnv2
 from pybullet_envs.bullet.kukaGymEnv import KukaGymEnv
-from pybullet_envs.bullet.tm700GymEnv import tm700GymEnv
 from stable_baselines import deepq
 from stable_baselines import DQN, PPO2, DDPG, HER
 from stable_baselines.her import GoalSelectionStrategy, HERGoalEnvWrapper
@@ -20,6 +19,8 @@ import time
 from stable_baselines.common.vec_env import DummyVecEnv
 # from stable_baselines.common.policies import MlpPolicy
 import numpy as np
+from stable_baselines.common.vec_env import VecVideoRecorder
+
 
 
 def evaluate(model, num_episodes=100):
@@ -32,6 +33,7 @@ def evaluate(model, num_episodes=100):
     # This function will only work for a single Environment
     env = model.get_env()
     all_episode_rewards = []
+    successratio = 0
     for i in range(num_episodes):
         episode_rewards = []
         done = False
@@ -43,15 +45,17 @@ def evaluate(model, num_episodes=100):
             # because we are using vectorized env
             obs, reward, done, info = env.step(action)
             episode_rewards.append(reward)
+            if reward > 950:
+                successratio +=1
 
         all_episode_rewards.append(sum(episode_rewards))
 
     mean_episode_reward = np.mean(all_episode_rewards)
-    print("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes)
+    successratio = successratio/num_episodes
+    print("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes, "Success ratio:", successratio)
 
     return mean_episode_reward
 
-from stable_baselines.common.vec_env import VecVideoRecorder
 
 def record_video(env_id, model, video_length=500, prefix='', video_folder='videos/'):
   """
